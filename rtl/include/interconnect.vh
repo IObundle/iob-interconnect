@@ -3,37 +3,27 @@
 //
 
 //uncomment to parse independently
-
-
-//`define DATA_W 32
+`define DATA_W 32
 
 //BUS TYPES
 `define I 0
 `define D 1
 
-//TODO: insert type argument in macros after name 
-
 //CONCAT BUS WIDTHS
 //request part
-`define BUS_REQ_W(TYPE, ADDR_W) 1+ADDR_W+TYPE*(`DATA_W+`DATA_W/8)
+`define BUS_REQ_W(TYPE, ADDR_W) (1+ADDR_W+TYPE*(`DATA_W+`DATA_W/8))
 //response part
-`define BUS_RESP_W              `DATA_W+1
+`define BUS_RESP_W              (`DATA_W+1)
 //whole
 `define BUS_W(TYPE, ADDR_W)     `BUS_REQ_W(TYPE, ADDR_W)+`BUS_RESP_W
 
 //UNCAT BUS SUFFIXES
-//signals
 `define valid _valid
 `define addr  _addr
 `define wdata _wdata
 `define wstrb _wstrb
 `define rdata _rdata
 `define ready _ready
-//type instruction, data or resized
-`define i     _i
-`define d     _d
-`define r     _r
-
 
 
 ///////////////////////////////////////////////////////////////////
@@ -58,29 +48,86 @@ wire [`DATA_W-1:0] NAME`rdata;\
 wire NAME`ready;
 
 
+///////////////////////////////////////////////////////////////////////////////////
+//GET FIELDS
+
+//gets the valid bit of cat bus
+`define get_valid(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W + (I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1]
+
+//gets the address field of cat bus
+`define get_address(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-2 -: ADDR_W]
+
+//gets the address field of cat bus
+`define get_valid_address(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: 1+ADDR_W]
+
+//gets the wdata field of cat bus
+`define get_wdata(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W -: `DATA_W]
+
+//gets the wstrb field of cat bus
+`define get_wstrb(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W-`DATA_W -: `DATA_W/8]
+
+//gets the write fields of cat bus
+`define get_write(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W -: `DATA_W+`DATA_W/8]
+
+//gets the request part of cat bus
+`define get_req(TYPE, NAME, ADDR_W, N, I)\
+NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: `BUS_REQ_W(TYPE, ADDR_W)]
+
+//gets all the request part of cat bus
+`define get_req_all(TYPE, NAME, ADDR_W, N)\
+NAME[N*`BUS_W(TYPE, ADDR_W)-1 -: N*`BUS_REQ_W(TYPE, ADDR_W)]
+
+//gets the rdata field of cat bus
+`define get_rdata(NAME, I) NAME[(I+1)*`BUS_RESP_W-1 -: `DATA_W]
+
+//gets the ready field of cat bus
+`define get_ready(NAME, I) NAME[I*`BUS_RESP_W]
+
+//gets the response part of a cat bus
+`define get_resp(NAME, I) NAME[(I+1)*`BUS_RESP_W-1 -: `BUS_RESP_W]
+
+//gets all the response part of a cat bus
+`define get_resp_all(NAME, N) NAME[N*`BUS_RESP_W-1 : 0]
+
 ////////////////////////////////////////////////////////////////
 // CONNECT
 //
 
-`define connect_c2c(TYPE, SRC, DEST, ADDR_W, N, I)\
-assign `get_req(TYPE, DEST,  ADDR_W, N, I) = `get_req(TYPE, SRC, ADDR_W, 1);\
-assign `get_resp(SRC, N, I) = `get_resp(TYPE, DEST,  ADDR_W, N);
+`define connect_c2cc(TYPE, SRC, DEST, ADDR_W, N, I)\
+assign `get_req(TYPE, DEST,  ADDR_W, N, I) = `get_req(TYPE, SRC, ADDR_W, 1, 0);\
+assign `get_resp(SRC, 0) = `get_resp(DEST, I);
 
-`define connect_u2c_master(TYPE, UNCAT, CAT, ADDR_W, N, I)\
-assign CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1]                    = UNCAT`valid;\
-assign CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: ADDR_W]          = UNCAT`addr;\
-assign CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1-ADDR_W -: `DATA_W]  = UNCAT`wdata;\
-assign CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDRW)-1-ADDR_W -: `DATA_W/8] = UNCAT`wstrb;\
-assign UNCAT`rdata                                                            = CAT[I*`BUS_RESP_W+`DATA_W -: `DATA_W];\
-assign UNCAT`ready                                                            = CAT[I*`BUS_RESP_W];
+//need to use 0 and not `I because of precedence of argument replacement
+`define connect_u2cc_i(UNCAT, CAT, ADDR_W, N, I)\
+assign `get_valid(0, CAT, ADDR_W, N, I)     = UNCAT`valid;\
+assign `get_address(0, CAT, ADDR_W, N, I)   = UNCAT`addr;\
+assign UNCAT`rdata                           = `get_rdata(CAT, I);\
+assign UNCAT`ready                           = `get_ready(CAT, I);
 
-`define connect_u2c_slave(TYPE, UNCAT, CAT, ADDR_W, N, I)\
-assign UNCAT`valid                           = CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1];\
-assign UNCAT`addr                            = CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-2 -: ADDR_W];\
-assign UNCAT`wdata                           = CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-2-ADDR_W -: `DATA_W];\
-assign UNCAT`wstrb                           = CAT[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-2-ADDR_W-`DATA_W -: `DATA_W/8];\
-assign CAT[I*`BUS_RESP_W+`DATA_W -: `DATA_W] = UNCAT`rdata;\ 
-assign CAT[I*`BUS_RESP_W]                    = UNCAT`ready;
+`define connect_cc2u_i(CAT, UNCAT, ADDR_W, N, I)\
+assign UNCAT`valid                           = `get_valid(0, CAT, ADDR_W, N, I);\
+assign UNCAT`addr                            = `get_address(0, CAT, ADDR_W, N, I);\
+assign `get_rdata(CAT, I)                    = UNCAT`rdata;\
+assign `get_ready(CAT, I)                    = UNCAT`ready;
+
+//assign UNCAT`valid = CAT[N*`BUS_RESP_W + (I+1)*`BUS_REQ_W(`I, ADDR_W)-1];\
+
+
+`define connect_u2cc_d(UNCAT, CAT, ADDR_W, N, I)\
+assign `get_valid(`D, CAT, ADDR_W, N, I)     = UNCAT`valid;\
+assign `get_address(`D, CAT, ADDR_W, N, I)   = UNCAT`addr;\
+assign `get_wdata(CAT, ADDR_W, N, I)         = UNCAT`wdata;\
+assign `get_wstrb(CAT, ADDR_W, N, I)         = UNCAT`wstrb;\
+assign UNCAT`rdata                           = `get_rdata(CAT, I);\
+assign UNCAT`ready                           = `get_ready(CAT, I);
+
+`define connect_cc2u_d(CAT, UNCAT, ADDR_W, N, I)\
+assign UNCAT`valid                           = `get_valid(`D, CAT, ADDR_W, N, I);\
+assign UNCAT`addr                            = `get_address(`D, CAT, ADDR_W, N, I);\
+assign UNCAT`wdata                           = `get_wdata(CAT, ADDR_W, N, I);\
+assign UNCAT`addr                            = `get_wstrb(CAT, ADDR_W, N, I);\
+assign `get_rdata(CAT, I)                    = UNCAT`rdata;\
+assign `get_ready(CAT, I)                    = UNCAT`ready;
 
 `define connect_u2u_d(SRC, DEST, ADDR_W, N, I)\
 assign DEST`valid = SRC`valid;\
@@ -98,52 +145,16 @@ assign SRC`ready = DEST`ready;
 
 
 ///////////////////////////////////////////////////////////////////////////////////
-//GET REQ AND RESP
-
-//gets the request part of bus
-//whole
-`define get_req (TYPE, NAME, ADDR_W, N)\
-NAME[N*`BUS_W(TYPE, ADDR_W)-1 -: N*`BUS_REQ_W(TYPE, ADDR_W)] 
-//slice
-`define get_req (TYPE, NAME, ADDR_W, N, I)\
-NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: `BUS_REQ_W(TYPE, ADDR_W)] 
-
-//gets the response part of bus
-//whole
-`define get_resp(NAME, N) NAME[N*`BUS_RESP_W-1 -: 0]
-//slice
-`define get_resp(NAME, N, I) NAME[(I+1)*`BUS_RESP_W-1 -: `BUS_RESP_W]
-
-//gets the valid bit of bus
-`define get_valid(TYPE, NAME, ADDR_W, I) NAME[(I+1)*`BUS_REQ_W(TYPE, NAME, ADDR_W)-1]
-
-//gets the address field of bus
-`define get_address(TYPE, NAME, ADDR_W, I) NAME[(I+1)*`BUS_REQ_W(TYPE, NAME, ADDR_W)-2 -: ADDR_W]
-
-
-///////////////////////////////////////////////////////////////////////////////////
 // TRANSFORM
 
-//convert instruction to data bus
+//convert instruction cat bus to data cat bus
 `define i2d(SRC, DEST, ADDR_W)\
-wire [`BUS_W(`D, ADDR_W)-1:0] DEST;\ //declare widened bus
-//valid & addr
-assign DEST[`BUS_W(`D, ADDR_W)-1 -: ADDR_W+1] = SRC[`BUS_W(`I, ADDR_W)-1];\
-//wdata & wstrb
-assign DEST[`BUS_W(`D, ADDR_W)-2 - ADDR_W -: `DATA_W+`DATA_W/8] = {`DATA_W+`DATA_W/8{1'b0}};\
-//rdata & ready
-assign SRC[`DATA_W : 0] = DEST[`DATA_W : 0];
+assign `get_valid_address(`D, DEST, ADDR_W, 1, 0) = `get_valid_address(`I, SRC, ADDR_W, 1, 0);\
+assign `get_write(`D, DEST, ADDR_W, 1, 0) = {`DATA_W+`DATA_W/8{1'b0}};\
+assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
 
-
-//convert bus to wider bus to macth addr_w
+//widen address field of bus to match destination
 `define widen (TYPE, SRC, SRC_ADDR_W, DEST, DEST_ADDR_W)\
-wire [`BUS_W(TYPE, DEST_ADDR_W)-1:0] DEST;\ //declare widened bus
-//valid 
-assign DEST[`BUS_W(TYPE, DEST_ADDR_W)-1] = SRC[`BUS_W(TYPE, SRC_ADDR_W)-1];\
-//addr
-assign DEST[`BUS_W(TYPE, DEST_ADDR_W)-2 -: DEST_ADDR_W] = 
-       {`BUS_W(TYPE, DEST_ADDR_W)-`BUS_W(TYPE, SRC_ADDR_W){1'b0}}, SRC[`BUS_W(TYPE, SRC_ADDR_W)-2 -: SRC_ADDR_W]};\
-//wdata & wstrb
-assign DEST[`BUS_W(TYPE, DEST_ADDR_W)-2 - DEST_ADDR_W -: `DATA_W+`DATA_W/8] = DEST[`BUS_W(TYPE, SRC_ADDR_W)-2 - SRC_ADDR_W -: `DATA_W+`DATA_W/8];\
-//rdata & ready
-assign SRC[`DATA_W : 0] = DEST[`DATA_W : 0];
+assign `get_valid_address(TYPE, DEST, ADDR_W, 1, 0) = `get_valid_address(TYPE, SRC, ADDR_W, 1, 0);\
+assign `get_write(TYPE, DEST, ADDR_W, 1, 0) = {`DATA_W+`DATA_W/8{1'b0}};\
+assign `get_resp(SRC, 0) = `get_resp(DEST, 0);

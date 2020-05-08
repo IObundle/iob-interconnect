@@ -93,27 +93,40 @@ NAME[N*`BUS_W(TYPE, ADDR_W)-1 -: N*`BUS_REQ_W(TYPE, ADDR_W)]
 // CONNECT
 //
 
-`define connect_c2cc(TYPE, SRC, DEST, ADDR_W, N, I)\
+
+//connect single cat bus to section of long cata bus
+`define connect_c2lc(TYPE, SRC, DEST, ADDR_W, N, I)\
 assign `get_req(TYPE, DEST,  ADDR_W, N, I) = `get_req(TYPE, SRC, ADDR_W, 1, 0);\
 assign `get_resp(SRC, 0) = `get_resp(DEST, I);
 
+//connect section of long cata bus to single cat bus
+`define connect_lc2c(TYPE, SRC, DEST, ADDR_W, N, I)\
+assign `get_req(TYPE, DEST, ADDR_W, 1, 0) = `get_req(TYPE, SRC,  ADDR_W, N, I);\ 
+assign `get_resp(SRC, I) = `get_resp(DEST, 0);
+
 //need to use 0 and not `I because of precedence of argument replacement
-`define connect_u2cc_i(UNCAT, CAT, ADDR_W, N, I)\
+`define connect_u2lc_i(UNCAT, CAT, ADDR_W, N, I)\
 assign `get_valid(0, CAT, ADDR_W, N, I)     = UNCAT`valid;\
 assign `get_address(0, CAT, ADDR_W, N, I)   = UNCAT`addr;\
 assign UNCAT`rdata                           = `get_rdata(CAT, I);\
 assign UNCAT`ready                           = `get_ready(CAT, I);
 
-`define connect_cc2u_i(CAT, UNCAT, ADDR_W, N, I)\
+`define connect_lc2u_i(CAT, UNCAT, ADDR_W, N, I)\
 assign UNCAT`valid                           = `get_valid(0, CAT, ADDR_W, N, I);\
 assign UNCAT`addr                            = `get_address(0, CAT, ADDR_W, N, I);\
 assign `get_rdata(CAT, I)                    = UNCAT`rdata;\
 assign `get_ready(CAT, I)                    = UNCAT`ready;
 
-//assign UNCAT`valid = CAT[N*`BUS_RESP_W + (I+1)*`BUS_REQ_W(`I, ADDR_W)-1];\
+`define connect_u2u_i(SRC, DEST)\
+assign DEST`valid = SRC`valid;\
+assign DEST`addr = SRC`addr;\
+assign SRC`rdata = DEST`rdata;\
+assign SRC`ready = DEST`ready;
 
 
-`define connect_u2cc_d(UNCAT, CAT, ADDR_W, N, I)\
+//data bus
+
+`define connect_u2lc_d(UNCAT, CAT, ADDR_W, N, I)\
 assign `get_valid(`D, CAT, ADDR_W, N, I)     = UNCAT`valid;\
 assign `get_address(`D, CAT, ADDR_W, N, I)   = UNCAT`addr;\
 assign `get_wdata(CAT, ADDR_W, N, I)         = UNCAT`wdata;\
@@ -121,7 +134,7 @@ assign `get_wstrb(CAT, ADDR_W, N, I)         = UNCAT`wstrb;\
 assign UNCAT`rdata                           = `get_rdata(CAT, I);\
 assign UNCAT`ready                           = `get_ready(CAT, I);
 
-`define connect_cc2u_d(CAT, UNCAT, ADDR_W, N, I)\
+`define connect_lc2u_d(CAT, UNCAT, ADDR_W, N, I)\
 assign UNCAT`valid                           = `get_valid(`D, CAT, ADDR_W, N, I);\
 assign UNCAT`addr                            = `get_address(`D, CAT, ADDR_W, N, I);\
 assign UNCAT`wdata                           = `get_wdata(CAT, ADDR_W, N, I);\
@@ -129,20 +142,13 @@ assign UNCAT`addr                            = `get_wstrb(CAT, ADDR_W, N, I);\
 assign `get_rdata(CAT, I)                    = UNCAT`rdata;\
 assign `get_ready(CAT, I)                    = UNCAT`ready;
 
-`define connect_u2u_d(SRC, DEST, ADDR_W, N, I)\
+`define connect_u2u_d(SRC, DEST)\
 assign DEST`valid = SRC`valid;\
 assign DEST`addr = SRC`addr;\
 assign DEST`wdata = SRC`wdata;\
 assign DEST`wstrb = SRC`wstrb;\
 assign SRC`rdata = DEST`rdata;\
 assign SRC`ready = DEST`ready;
-
-`define connect_u2u_i(SRC, DEST, ADDR_W, N, I)\
-assign DEST`valid = SRC`valid;\
-assign DEST`addr = SRC`addr;\
-assign SRC`rdata = DEST`rdata;\
-assign SRC`ready = DEST`ready;
-
 
 ///////////////////////////////////////////////////////////////////////////////////
 // TRANSFORM
@@ -151,6 +157,11 @@ assign SRC`ready = DEST`ready;
 `define i2d(SRC, DEST, ADDR_W)\
 assign `get_valid_address(`D, DEST, ADDR_W, 1, 0) = `get_valid_address(`I, SRC, ADDR_W, 1, 0);\
 assign `get_write(`D, DEST, ADDR_W, 1, 0) = {`DATA_W+`DATA_W/8{1'b0}};\
+assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
+
+//convert data cat bus to instruction cat bus
+`define d2i(SRC, DEST, ADDR_W)\
+assign `get_valid_address(`I, DEST, ADDR_W, 1, 0) = `get_valid_address(`D, SRC, ADDR_W, 1, 0);\
 assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
 
 //widen address field of bus to match destination

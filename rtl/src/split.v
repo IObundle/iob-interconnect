@@ -22,7 +22,7 @@ module split
     );
 
 
-   parameter N_SLAVES_W = clog2(N_SLAVES);
+   parameter N_SLAVES_W = $clog2(N_SLAVES);
    
    //insert extra address bits   
    integer                                             i;

@@ -15,7 +15,7 @@
 //response part
 `define BUS_RESP_W              (`DATA_W+1)
 //whole
-`define BUS_W(TYPE, ADDR_W)     `BUS_REQ_W(TYPE, ADDR_W)+`BUS_RESP_W
+`define BUS_W(TYPE, ADDR_W)     (`BUS_REQ_W(TYPE, ADDR_W)+`BUS_RESP_W)
 
 //UNCAT BUS SUFFIXES
 `define valid _valid
@@ -56,6 +56,18 @@ wire NAME`ready;
 ///////////////////////////////////////////////////////////////////////////////////
 //GET FIELDS
 
+//gets all the request part of cat bus
+`define get_req_all(TYPE, NAME, ADDR_W, N) NAME[N*`BUS_W(TYPE, ADDR_W)-1 -: N*`BUS_REQ_W(TYPE, ADDR_W)]
+
+//gets all the response part of a cat bus
+`define get_resp_all(NAME, N) NAME[N*`BUS_RESP_W-1 : 0]
+
+//gets the request part of cat bus
+`define get_req(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+I*`BUS_REQ_W(TYPE, ADDR_W) +: `BUS_REQ_W(TYPE, ADDR_W)]
+
+//gets the response part of a cat bus
+`define get_resp(NAME, I) NAME[I*`BUS_RESP_W +: `BUS_RESP_W]
+
 //gets the valid bit of cat bus
 `define get_valid(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W + (I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1]
 
@@ -63,36 +75,27 @@ wire NAME`ready;
 `define get_address(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-2 -: ADDR_W]
 
 //gets the address field of cat bus
+`define get_narrow_address(TYPE, NAME, ADDR_W, ADDRN_W, N, I) NAME[N*`BUS_RESP_W+I*`BUS_REQ_W(TYPE, ADDR_W)+TYPE*(`DATA_W+`DATA_W/8) +: ADDRN_W]
+
+//gets the address field of cat bus
 `define get_valid_address(TYPE, NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: 1+ADDR_W]
 
 //gets the wdata field of cat bus
-`define get_wdata(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W -: `DATA_W]
+`define get_wdata(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+I*`BUS_REQ_W(`D, ADDR_W)+`DATA_W/8 +: `DATA_W]
 
 //gets the wstrb field of cat bus
-`define get_wstrb(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W-`DATA_W -: `DATA_W/8]
+`define get_wstrb(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+I*`BUS_REQ_W(`D, ADDR_W) +: `DATA_W/8]
 
 //gets the write fields of cat bus
-`define get_write(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(`D, ADDR_W)-2-ADDR_W -: `DATA_W+`DATA_W/8]
-
-//gets the request part of cat bus
-`define get_req(TYPE, NAME, ADDR_W, N, I)\
-NAME[N*`BUS_RESP_W+(I+1)*`BUS_REQ_W(TYPE, ADDR_W)-1 -: `BUS_REQ_W(TYPE, ADDR_W)]
-
-//gets all the request part of cat bus
-`define get_req_all(TYPE, NAME, ADDR_W, N)\
-NAME[N*`BUS_W(TYPE, ADDR_W)-1 -: N*`BUS_REQ_W(TYPE, ADDR_W)]
+`define get_write(NAME, ADDR_W, N, I) NAME[N*`BUS_RESP_W+I*`BUS_REQ_W(`D, ADDR_W) +: `DATA_W+`DATA_W/8]
 
 //gets the rdata field of cat bus
-`define get_rdata(NAME, I) NAME[(I+1)*`BUS_RESP_W-1 -: `DATA_W]
+`define get_rdata(NAME, I) NAME[I*`BUS_RESP_W +: `DATA_W]
 
 //gets the ready field of cat bus
 `define get_ready(NAME, I) NAME[I*`BUS_RESP_W]
 
-//gets the response part of a cat bus
-`define get_resp(NAME, I) NAME[(I+1)*`BUS_RESP_W-1 -: `BUS_RESP_W]
 
-//gets all the response part of a cat bus
-`define get_resp_all(NAME, N) NAME[N*`BUS_RESP_W-1 : 0]
 
 ////////////////////////////////////////////////////////////////
 // CONNECT
@@ -169,33 +172,3 @@ assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
 assign `get_valid_address(`I, DEST, ADDR_W, 1, 0) = `get_valid_address(`D, SRC, ADDR_W, 1, 0);\
 assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
 
-//connect cat bus to wider address field cat instruction bus
-`define connect_2wider_i(SRC, S_ADDR_W, DEST, D_ADDR_W)\
-assign `get_valid(`I, DEST, D_ADDR_W, 1, 0) = `get_valid(`I, SRC, S_ADDR_W, 1, 0);\
-assign `get_address(`I, DEST, D_ADDR_W, 1, 0) = {{D_ADDR_W-S_ADDR_W{1'b0}}, `get_address(`I, SRC, S_ADDR_W, 1, 0)};\
-assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
-
-//connect cat bus to narrower address field cat instruction bus
-`define connect_2narrower_i(SRC, S_ADDR_W, DEST, D_ADDR_W)\
-assign `get_valid(`I, DEST, D_ADDR_W, 1, 0) = `get_valid(`I, SRC, S_ADDR_W, 1, 0);\
-assign `get_resp(SRC, 0) = `get_resp(DEST, 0);\
-wire [S_ADDR_W-1:0] DEST`tmp = `get_address(`I, SRC, S_ADDR_W, 1, 0);\
-assign `get_address(`I, DEST, D_ADDR_W, 1, 0) = DEST`tmp[D_ADDR_W-1:0];\
-
-
-
-//connect cat bus to wider address field cat data bus
-`define connect_2wider_d(SRC, S_ADDR_W, DEST, D_ADDR_W)\
-assign `get_valid(`D, DEST, D_ADDR_W, 1, 0) = `get_valid(`D, SRC, S_ADDR_W, 1, 0);\
-assign `get_address(`D, DEST, D_ADDR_W, 1, 0) = {{D_ADDR_W-S_ADDR_W{1'b0}}, `get_address(`D, SRC, S_ADDR_W, 1, 0)};\
-assign `get_write(DEST, D_ADDR_W, 1, 0) = {`DATA_W+`DATA_W/8{1'b0}};\
-assign `get_resp(SRC, 0) = `get_resp(DEST, 0);
- 
-
-//connect cat bus to narrower address field cat data bus
-`define connect_2narrower_d(SRC, S_ADDR_W, DEST, D_ADDR_W)\
-assign `get_valid(`D, DEST, D_ADDR_W, 1, 0) = `get_valid(`D, SRC, S_ADDR_W, 1, 0);\
-wire [S_ADDR_W-1:0] DEST`tmp = `get_address(`D, SRC, S_ADDR_W, 1, 0);\
-assign `get_address(`D, DEST, D_ADDR_W, 1, 0) = DEST`tmp[D_ADDR_W-1:0];\
-assign `get_write(DEST, D_ADDR_W, 1, 0) = {`DATA_W+`DATA_W/8{1'b0}};\
-assign `get_resp(SRC, 0) = `get_resp(DEST, 0);

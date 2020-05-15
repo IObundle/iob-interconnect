@@ -11,14 +11,14 @@ module split
     )
    (
     //extra split bits 
-    input [E_ADDR_W-1:0]                                                m_e_addr,
+    input [E_ADDR_W-1:0]                                                         m_e_addr,
     //masters interface
-    input [`BUS_REQ_W(TYPE, ADDR_W)-1:0]                                m_req,
-    output reg [`BUS_RESP_W-1:0]                                        m_resp,
+    input [`BUS_REQ_W(TYPE, ADDR_W)-1:0]                                         m_req,
+    output reg [`BUS_RESP_W-1:0]                                                 m_resp,
 
     //slave interface
-    output reg [N_SLAVES*`BUS_REQ_W(TYPE, ADDR_W-$clog2(N_SLAVES))-1:0] s_req,
-    input [N_SLAVES*`BUS_RESP_W-1:0]                                    s_resp
+    output reg [N_SLAVES*`BUS_REQ_W(TYPE, ADDR_W+E_ADDR_W-$clog2(N_SLAVES))-1:0] s_req,
+    input [N_SLAVES*`BUS_RESP_W-1:0]                                             s_resp
     );
 
 

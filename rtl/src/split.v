@@ -6,32 +6,23 @@ module split
   #(
     parameter TYPE = `D,
     parameter N_SLAVES = 2,
-    parameter ADDR_W = 32,
-    parameter E_ADDR_W = 0
+    parameter ADDR_W = 32
     )
    (
-    //extra split bits 
-    input [E_ADDR_W-1:0]                                                         m_e_addr,
     //masters interface
-    input [`BUS_REQ_W(TYPE, ADDR_W)-1:0]                                         m_req,
-    output reg [`BUS_RESP_W-1:0]                                                 m_resp,
+    input [`BUS_REQ_W(TYPE, ADDR_W)-1:0]                                m_req,
+    output reg [`BUS_RESP_W-1:0]                                        m_resp,
 
     //slave interface
-    output reg [N_SLAVES*`BUS_REQ_W(TYPE, ADDR_W+E_ADDR_W-$clog2(N_SLAVES))-1:0] s_req,
-    input [N_SLAVES*`BUS_RESP_W-1:0]                                             s_resp
+    output reg [N_SLAVES*`BUS_REQ_W(TYPE, ADDR_W-$clog2(N_SLAVES))-1:0] s_req,
+    input [N_SLAVES*`BUS_RESP_W-1:0]                                    s_resp
     );
 
 
    parameter N_SLAVES_W = $clog2(N_SLAVES);
-   parameter ADDRN_W = ADDR_W-N_SLAVES_W+E_ADDR_W;
+   parameter ADDRN_W = ADDR_W-N_SLAVES_W;
    
-   //build split bits;
-   wire [N_SLAVES_W-1:0]                                                split_bits;
-
-   assign split_bits = (E_ADDR_W ==  N_SLAVES_W)? m_e_addr : (!E_ADDR_W)?
-                       m_req[`BUS_REQ_W(TYPE, ADDR_W)-2 : `BUS_REQ_W(TYPE, ADDR_W)-2-N_SLAVES_W]:
-                       {m_e_addr, m_req[`BUS_REQ_W(TYPE, ADDR_W)-2 : `BUS_REQ_W(TYPE, ADDR_W)-2-N_SLAVES_W+E_ADDR_W]};
-
+   wire [N_SLAVES_W-1:0]                                                split_bits =  m_req[`BUS_REQ_W(TYPE, ADDR_W)-2 -: N_SLAVES_W];
 
    //create and assign cat master buses
    `bus_cat(TYPE, m, ADDR_W, 1)
@@ -43,7 +34,9 @@ module split
    assign s_req = `get_req_all(TYPE, s, ADDRN_W, N_SLAVES);
    assign `get_resp_all(s, N_SLAVES) = s_resp;
 
-   //create narrow slave control buses
+   //
+   //CREATE NARROW SLAVE CONTROL BUSES
+   //
    //master narrow copy
    `bus_cat(TYPE, m2s, ADDRN_W, 1)
    //connect master to narrow copy 
@@ -60,7 +53,7 @@ module split
       end
    endgenerate
        
-   //narrow null bus for unconnected peripherals
+   //narrow null bus for unselected slaves
    `bus_cat(TYPE, m2s_null, ADDRN_W, 1)
    assign `get_req(TYPE, m2s_null, ADDRN_W, 1, 0) = {`BUS_REQ_W(TYPE, ADDRN_W){1'b0}};
    assign `get_resp(m2s_null, 0) = {`BUS_RESP_W{1'bz}};

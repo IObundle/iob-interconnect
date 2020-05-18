@@ -25,18 +25,18 @@ module split
 
    //create and assign cat master buses
    `bus_cat(m, ADDR_W, 1)
-   assign `get_req(m, ADDR_W, 1, 0) = m_req;
-   assign m_resp = `get_resp(m, 0);
+   assign m[`req(ADDR_W, 0, 1)] = m_req;
+   assign m_resp = m[`resp(0)];
 
    //create and assign cat slave bus
    `bus_cat(s, DADDR_W, N_SLAVES)
-   assign s_req = `get_req_all(s, DADDR_W, N_SLAVES);
-   assign `get_resp_all(s, N_SLAVES) = s_resp;
+   assign s_req = s[`req_all(DADDR_W, N_SLAVES)];
+   assign s[`resp_all(N_SLAVES)] = s_resp;
 
    //null bus for unselected slaves
    `bus_cat(m_null, DADDR_W, 1)
-   assign `get_req(m_null, DADDR_W, 1, 0) = {`BUS_REQ_W(DADDR_W){1'b0}};
-   assign `get_resp(m_null, 0) = {`BUS_RESP_W{1'bz}};
+   assign m_null[`req(DADDR_W, 1, 0)] = {`BUS_REQ_W(DADDR_W){1'b0}};
+   assign m_null[`resp(0)] = {`BUS_RESP_W{1'bz}};
 
 
    //do the split
@@ -45,7 +45,8 @@ module split
    generate 
       //demux output
       for (i=0; i<N_SLAVES; i=i+1) begin : demux_out
-         assign `get_req(s, DADDR_W, N_SLAVES, i) = (i==split_bits)? 
+         
+         assign s[`req(DADDR_W, N_SLAVES, i)] = (i==split_bits)? 
                                                     `get_req_naddrbits(m, DADDR_W, ADDR_W, 1, 0):
                                                     `get_req(m_null, DADDR_W, 1, 0);
          assign `get_resp(m, 0) = (i==split_bits)? `get_resp(s, i) : `get_resp(m_null, 0);

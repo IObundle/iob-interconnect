@@ -3,8 +3,8 @@
 //
 
 //uncomment to parse independently
-`define ADDR_W 32
-`define DATA_W 32
+//`define ADDR_W 32
+//`define DATA_W 32
 
 //DATA WIDTHS
 `define VALIDW 1
@@ -44,10 +44,10 @@
 `define address(I) I*`REQ_W+`ADDRP +: `ADDR_W
 
 //gets the address of cat bus section
-`define address_nbits(NBITS) `ADDRP +: NBITS
+`define address_nbits(I, NBITS) I*`REQ_W+`ADDRP +: NBITS
 
 //gets the slave select part of address of cat bus section
-`define addr_slave(NSLAVESW) `REQ_W-1-`VALIDW-2 -: NSLAVESW 
+`define address_slave(NSLAVESW) `REQ_W-1-`VALIDW-2 -: NSLAVESW 
 
 //gets the wdata field of cat bus
 `define wdata(I) I*`REQ_W+`WDATAP +: `DATA_W

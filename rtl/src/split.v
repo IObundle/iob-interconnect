@@ -9,23 +9,33 @@ module split
    (
     //masters interface
     input [`REQ_W-1:0]           m_req,
-    output [`RESP_W-1:0]         m_resp,
+    output reg [`RESP_W-1:0]     m_resp,
 
     //slave interface
-    input [$clog2(N_SLAVES)-1:0] s_sel,
-    output [N_SLAVES*`REQ_W-1:0] s_req,
+    input [$clog2(N_SLAVES):0] s_sel,
+    output reg [N_SLAVES*`REQ_W-1:0] s_req,
     input [N_SLAVES*`RESP_W-1:0] s_resp
     );
 
-   //master answered by selected slave 
-   assign  m_resp = s_resp[`resp(s_sel)];
+   //deliver request to selected slave
+   integer                        i;
+   always @* begin
+      for (i=0; i<N_SLAVES; i=i+1)
+        if(i == s_sel)
+          //delete slave forward request
+          s_req[`req(i)] = m_req;
+        else
+          s_req[`valid(i)] = 1'b0;
+   end
 
-   //do the split
-   genvar                            i;
-   generate 
-      for (i=0; i<N_SLAVES; i=i+1) begin : split
-        assign s_req[`req(i)] = (s_sel == i)? m_req: (m_req & {1'b0, {`REQ_W-1{1'b1}}});
-//        assign s_req[`req(i)] = (s_sel == i)? m_req: 0;
-      end
-   endgenerate
+   //route selected slave response to master
+   integer                       j;
+   always @* begin
+      for (j=0; j<N_SLAVES; j=j+1)
+        if(s_sel == j)
+          m_resp = s_resp[`resp(j)];
+        else
+          m_resp[`ready(i)] = 1'b0;
+   end
+   
 endmodule

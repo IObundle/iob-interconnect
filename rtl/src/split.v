@@ -16,12 +16,15 @@ module split
     output reg [N_SLAVES*`REQ_W-1:0] s_req,
     input [N_SLAVES*`RESP_W-1:0] s_resp
     );
-
+   
+   //mask select bit MSB
+   wire [$clog2(N_SLAVES):0]     s_sel_int = ~(1<<$clog2(N_SLAVES)) & s_sel;
+                             
    //deliver request to selected slave
    integer                        i;
    always @* begin
       for (i=0; i<N_SLAVES; i=i+1)
-        if(i == s_sel)
+        if(i == s_sel_int)
           //delete slave forward request
           s_req[`req(i)] = m_req;
         else
@@ -31,11 +34,10 @@ module split
    //route selected slave response to master
    integer                       j;
    always @* begin
+      m_resp[`ready(0)] = 1'b0;
       for (j=0; j<N_SLAVES; j=j+1)
-        if(s_sel == j)
+        if(j == s_sel_int )
           m_resp = s_resp[`resp(j)];
-        else
-          m_resp[`ready(i)] = 1'b0;
    end
    
 endmodule

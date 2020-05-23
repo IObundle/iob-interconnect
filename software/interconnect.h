@@ -1,5 +1,6 @@
 //memory access macros
-#define MEM_PUTINT(location, value) (*((int*) (location)) = value)
+#define RAM_GET(type, location, value) (*((type*) (location)))
+#define RAM_SET(type, location, value) (*((type*) (location)) = value)
 
 //stream access macros
 #define MEMSET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)

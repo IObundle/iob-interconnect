@@ -25,9 +25,10 @@ module split
    always @* begin
       for (i=0; i<N_SLAVES; i=i+1)
         if(i == s_sel_int)
-          //delete slave forward request
+          //delete master request to slave
           s_req[`req(i)] = m_req;
         else
+          //delete slave request
           s_req[`valid(i)] = 1'b0;
    end
 

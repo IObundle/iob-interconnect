@@ -8,17 +8,17 @@ module split
     )
    (
     //masters interface
-    input [`REQ_W-1:0]           m_req,
-    output reg [`RESP_W-1:0]     m_resp,
+    input [`REQ_W-1:0]               m_req,
+    output reg [`RESP_W-1:0]         m_resp,
 
     //slave interface
-    input [$clog2(N_SLAVES):0] s_sel,
+    input [$clog2(N_SLAVES):0]       s_sel,
     output reg [N_SLAVES*`REQ_W-1:0] s_req,
-    input [N_SLAVES*`RESP_W-1:0] s_resp
+    input [N_SLAVES*`RESP_W-1:0]     s_resp
     );
    
    //mask select bit MSB
-   wire [$clog2(N_SLAVES):0]     s_sel_int = ~(1<<$clog2(N_SLAVES)) & s_sel;
+   wire [$clog2(N_SLAVES):0]         s_sel_int = ~(1<<$clog2(N_SLAVES)) & s_sel;
                              
    //deliver request to selected slave
    integer                        i;

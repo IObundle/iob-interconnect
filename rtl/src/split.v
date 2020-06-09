@@ -29,13 +29,13 @@ module split
           s_req[`req(i)] = m_req;
         else
           //delete slave request
-          s_req[`valid(i)] = 1'b0;
+          s_req[`req(i)] = {(`REQ_W){1'b0}};
    end
 
    //route selected slave response to master
    integer                       j;
    always @* begin
-      m_resp[`ready(0)] = 1'b0;
+      m_resp = {(`RESP_W){1'b0}};
       for (j=0; j<N_SLAVES; j=j+1)
         if(j == s_sel_int )
           m_resp = s_resp[`resp(j)];

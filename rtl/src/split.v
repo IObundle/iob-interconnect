@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-
 `include "interconnect.vh"
 
 module split
@@ -12,13 +11,14 @@ module split
     output reg [`RESP_W-1:0]         m_resp,
 
     //slave interface
-    input [$clog2(N_SLAVES):0]       s_sel,
+    //input [$clog2(N_SLAVES):0]       s_sel,
     output reg [N_SLAVES*`REQ_W-1:0] s_req,
     input [N_SLAVES*`RESP_W-1:0]     s_resp
     );
    
    //mask select bit MSB
-   wire [$clog2(N_SLAVES):0]         s_sel_int = ~(1<<$clog2(N_SLAVES)) & s_sel;
+   wire [$clog2(N_SLAVES):0]         s_sel_int = m_req[`REQ_W-1:`REQ_W-1-$clog2(N_SLAVES)] & ~(1<<$clog2(N_SLAVES));
+   
                              
    //deliver request to selected slave
    integer                        i;

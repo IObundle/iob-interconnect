@@ -3,7 +3,8 @@
 
 module split
   #(
-    parameter N_SLAVES = 2
+    parameter N_SLAVES = 2, //number of slaves
+    parameter P_SLAVES = `REQ_W-2 //slave select word msb position
     )
    (
     //masters interface
@@ -17,7 +18,7 @@ module split
     );
    
    //mask select bit MSB
-   wire [$clog2(N_SLAVES):0]         s_sel_int = m_req[`REQ_W-1:`REQ_W-1-$clog2(N_SLAVES)] & ~(1<<$clog2(N_SLAVES));
+   wire [$clog2(N_SLAVES):0]         s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-$clog2(N_SLAVES)] & ~(1<<$clog2(N_SLAVES));
    
                              
    //deliver request to selected slave

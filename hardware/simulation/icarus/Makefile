@@ -2,8 +2,8 @@
 FREQ := 100000000
 
 # file paths
-RTL_DIR := ../../rtl
-SUBMODULES_DIR := ../../submodules
+RTL_DIR := ../..
+SUBMODULES_DIR := ../../../submodules
 AXI_RAM_DIR := $(SUBMODULES_DIR)/axi-mem
 
 # hw includes

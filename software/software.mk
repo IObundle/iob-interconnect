@@ -1,0 +1,1 @@
+INCLUDE+=-I$(INTERCON_DIR)/software

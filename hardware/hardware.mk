@@ -5,7 +5,7 @@ INTERCON_INC_DIR:=$(INTERCON_HW_DIR)/include
 INCLUDE+=$(incdir) $(INTERCON_INC_DIR)
 
 #headers
-VHDR+=$(INTERCON_INC_DIR)/*.vh
+VHDR+=$(wildcard $(INTERCON_INC_DIR)/*.vh)
 
 #sources
 INTERCON_SRC_DIR:=$(INTERCON_HW_DIR)/src

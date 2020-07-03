@@ -41,7 +41,7 @@
 `define valid(I) I*`REQ_W + `VALID_P
 
 //gets the address of cat bus section
-`define address(I,W,B) I*`REQ_W+`ADDR_P+W-1 -: W-B
+`define address(I,W,LSB) I*`REQ_W+`ADDR_P+W-1 -: W-LSB
 
 //gets the wdata field of cat bus
 `define wdata(I) I*`REQ_W+`WDATA_P +: `DATA_W

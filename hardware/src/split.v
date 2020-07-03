@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 `include "interconnect.vh"
 
+`define Nb $clog2(N_SLAVES)
+
 module split
   #(
     parameter N_SLAVES = 2, //number of slaves
@@ -18,7 +20,7 @@ module split
     );
    
    //mask select bit MSB
-   wire [$clog2(N_SLAVES):0]         s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-$clog2(N_SLAVES)] & ~(1<<$clog2(N_SLAVES));
+   wire [`Nb:0]                      s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-`Nb] & ~(1<<`Nb);
    
                              
    //deliver request to selected slave

@@ -20,7 +20,7 @@ module split
     );
    
    //mask select bit MSB
-   wire [`Nb:0]                      s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-`Nb] & ~(1<<`Nb);
+   wire [`Nb:0]                      s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-`Nb] & {1'b0, {`Nb{1'b1}}};
    
                              
    //deliver request to selected slave

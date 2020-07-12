@@ -24,6 +24,7 @@ module merge
       for (i=0; i<N_MASTERS; i=i+1)
         if(m_req[`valid(i)]) begin //test valid bit 
            s_req = m_req[`req(i)];
+           m_resp = {N_MASTERS*`RESP_W{1'b0}};
            m_resp[`resp(i)] = s_resp;
         end
    end

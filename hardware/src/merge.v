@@ -3,7 +3,9 @@
 
 module merge
   #(
-    parameter N_MASTERS = 2
+    parameter N_MASTERS = 2,
+    parameter DATA_W = 32,
+    parameter ADDR_W = 32
     )
    (
     //masters interface
@@ -19,7 +21,7 @@ module merge
 
    //priority encoder: most significant bus has priority   
    always @* begin
-      s_req = 1'b0;
+      s_req = {`REQ_W{1'b0}};
       m_resp = {N_MASTERS*`RESP_W{1'b0}};
       for (i=0; i<N_MASTERS; i=i+1)
         if(m_req[`valid(i)]) begin //test valid bit 

@@ -5,10 +5,10 @@
 
 module split
   #(
-    parameter N_SLAVES = 2, //number of slaves
-    parameter P_SLAVES = `REQ_W-2, //slave select word msb position
     parameter DATA_W = 32,
-    parameter ADDR_W = 32
+    parameter ADDR_W = 32,
+    parameter N_SLAVES = 2, //number of slaves
+    parameter P_SLAVES = `REQ_W-2 //slave select word msb position
     )
    (
     //masters interface

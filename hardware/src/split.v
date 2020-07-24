@@ -22,7 +22,7 @@ module split
     );
    
    //slave select word
-   wire [`Nb:0]                      s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-`Nb] & {1'b0, {`Nb{1'b1}}};
+   wire [`Nb:0]                      s_sel_int = m_req[P_SLAVES+1:P_SLAVES+1-`Nb] & ({`Nb+1{1'b1}}>>1);
    
    //route master and slave                       
    integer                        i;

@@ -1,8 +1,6 @@
 `timescale 1ns / 1ps
 `include "interconnect.vh"
 
-`define Nb $clog2(N_SLAVES)+($clog2(N_SLAVES)==0)
-
 module split
   #(
     parameter DATA_W = 32,
@@ -23,8 +21,11 @@ module split
     input [N_SLAVES*`RESP_W-1:0]     s_resp
     );
    
+   localparam  Nb=$clog2(N_SLAVES)+($clog2(N_SLAVES)==0);
+   
+
    //slave select word
-   wire [`Nb:0]                      s_sel = m_req[P_SLAVES+1 -:`Nb+1] & ({(`Nb+1){1'b1}}>>1);
+   wire [Nb:0]                      s_sel = m_req[P_SLAVES+1 -:Nb+1] & ({(Nb+1){1'b1}}>>1);
    
    //route master request to selected slave
    integer                           i;
@@ -46,10 +47,10 @@ module split
    //
 
    //register the slave selection
-   reg [`Nb:0]                       s_sel_reg;
+   reg [Nb:0]                       s_sel_reg;
    always @( posedge clk, posedge rst ) begin
       if( rst )
-        s_sel_reg <= {`Nb{1'b0}};
+        s_sel_reg <= {Nb{1'b0}};
       else
         s_sel_reg <= s_sel;          
    end

@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 `include "interconnect.vh"
 
-`define Nb $clog2(N_MASTERS)+($clog2(N_MASTERS)==0)
 
 module merge
   #(
@@ -23,18 +22,22 @@ module merge
     input [`RESP_W-1:0]                s_resp
     );
 
+
+   localparam Nb=$clog2(N_MASTERS)+($clog2(N_MASTERS)==0);
+   
+
    //                               
    //priority encoder: most significant bus has priority   
    //
-   reg [`Nb-1:0]                      sel, sel_reg;
+     reg [Nb-1:0]                      sel, sel_reg;
 
    //select master
    integer                             k;
    always @* begin
-      sel = {`Nb{1'b0}};
+      sel = {Nb{1'b0}};
       for (k=0; k<N_MASTERS; k=k+1)
         if( m_req[`valid(k)] )
-          sel = k[`Nb-1:0];          
+          sel = k[Nb-1:0];          
    end
 
    //
@@ -55,7 +58,7 @@ module merge
    //register master selection
    always @( posedge clk, posedge rst ) begin
       if( rst )
-        sel_reg <= {`Nb{1'b0}};
+        sel_reg <= {Nb{1'b0}};
       else
         sel_reg <= sel;
    end

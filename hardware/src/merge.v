@@ -67,7 +67,7 @@ module merge
    integer                             j;
    always @* begin
       for (j=0; j<N_MASTERS; j=j+1)
-        if( j == sel )
+        if( j == sel_reg )
           m_resp[`resp(j)] = s_resp;
         else
           m_resp[`resp(j)] = {`RESP_W{1'b0}};

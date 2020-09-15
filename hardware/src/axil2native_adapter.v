@@ -39,8 +39,8 @@ module axil2native_adapter #
    parameter STRB_WIDTH = (DATA_WIDTH/8)
    )
    (
-    input wire 			clk,
-    input wire 			rst,
+    input 			clk,
+    input  			rst,
     
     // AXI4-lite slave interface
     input [ADDR_WIDTH-1:0] 	s_axil_awaddr,
@@ -68,9 +68,9 @@ module axil2native_adapter #
     input 			s_axil_rready,
     
     // Native interface
-    output 			native_valid,
+    output reg 			native_valid,
     input 			native_ready,
-    output [ADDR_WIDTH-1:0] 	native_addr,
+    output reg [ADDR_WIDTH-1:0] native_addr,
     output reg [DATA_WIDTH-1:0] native_wdata,
     output reg [STRB_WIDTH-1:0] native_wstrb,
     input [DATA_WIDTH-1:0] 	native_rdata 
@@ -85,22 +85,22 @@ module axil2native_adapter #
    reg [DATA_WIDTH-1:0]     s_axil_rdata_reg = {DATA_WIDTH{1'b0}}, s_axil_rdata_next;
    reg 			    s_axil_rvalid_reg = 1'b0, s_axil_rvalid_next;
    
-   wire [VALID_ADDR_WIDTH-1:0] s_axil_awaddr_valid = s_axil_awaddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
-   wire [VALID_ADDR_WIDTH-1:0] s_axil_araddr_valid = s_axil_araddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
+   wire [ADDR_WIDTH-1:0] s_axil_awaddr_valid = s_axil_awaddr;
+   wire [ADDR_WIDTH-1:0] s_axil_araddr_valid = s_axil_araddr;
    
    assign s_axil_awready = s_axil_awready_reg;
    assign s_axil_wready = s_axil_wready_reg;
    assign s_axil_bresp = 2'b00;
-   assign s_axil_bvalid = s_axil_bvalid_reg;
+   assign s_axil_bvalid = s_axil_bvalid_reg & native_ready;
    assign s_axil_arready = s_axil_arready_reg;
-   assign s_axil_rdata = s_axil_rdata_reg;
+   //assign s_axil_rdata = s_axil_rdata_reg;
+   assign s_axil_rdata = native_rdata;
    assign s_axil_rresp = 2'b00;
-   assign s_axil_rvalid = s_axil_rvalid_reg;
+   assign s_axil_rvalid = s_axil_rvalid_reg & native_ready;
    
    //WRITE
    always @* begin
       wr_en = 1'b0;
-      native_wstrb = {STRB_WIDTH{1'b0}};
       
       s_axil_awready_next = 1'b0;
       s_axil_wready_next = 1'b0;
@@ -111,13 +111,13 @@ module axil2native_adapter #
          s_axil_wready_next = 1'b1;
          s_axil_bvalid_next = 1'b1;
 	 
-         native_wstrb = s_axil_wstrb;
 	 wr_en = 1'b1;
       end
    end
    
    always @(posedge clk) begin
       if (rst) begin
+	 native_wstrb = {STRB_WIDTH{1'b0}};
          s_axil_awready_reg <= 1'b0;
          s_axil_wready_reg <= 1'b0;
          s_axil_bvalid_reg <= 1'b0;
@@ -127,7 +127,8 @@ module axil2native_adapter #
          s_axil_bvalid_reg <= s_axil_bvalid_next;
       end
 
-      native_wdata_reg <= s_axil_wdata;
+      native_wstrb <= s_axil_wstrb;
+      native_wdata <= s_axil_wdata;
    end
 
    //READ
@@ -156,15 +157,18 @@ module axil2native_adapter #
       s_axil_rdata_reg <= native_rdata;
    end // always @ (posedge clk)
 
-   //ADDRESS MUX
+   //ADDRESS/VALID MUX
    always @(posedge clk) begin
-      if (rst)
-	native_addr <= {ADDR_WIDTH{1'b0}};
+      if (rst) begin
+	 native_addr <= {ADDR_WIDTH{1'b0}};
+	 native_valid <= 1'b0;
+      end
       else if (wr_en) begin
 	 native_addr <= s_axil_awaddr;
 	 native_valid <= s_axil_wvalid;
       end
       else
+	native_valid <= s_axil_arvalid && (!s_axil_rvalid || s_axil_rready) && !s_axil_arready && !s_axil_wvalid && !s_axil_awvalid;
 	native_addr <= s_axil_araddr;
    end
    

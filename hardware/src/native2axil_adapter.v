@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module native2axil_adapter #
   (
    // Width of data bus in bits
@@ -8,7 +10,7 @@ module native2axil_adapter #
    parameter STRB_WIDTH = (DATA_WIDTH/8)
    )   
    (
-    input 		    clk, resetn,
+    input 		    clk, rst,
     
     // AXI4-lite master interface
     
@@ -20,7 +22,7 @@ module native2axil_adapter #
     output 		    m_axi_wvalid,
     input 		    m_axi_wready,
     output [DATA_WIDTH-1:0] m_axi_wdata,
-    output [STRB_WIDTH:0]   m_axi_wstrb,
+    output [STRB_WIDTH-1:0] m_axi_wstrb,
 
     input 		    m_axi_bvalid,
     output 		    m_axi_bready,
@@ -68,7 +70,7 @@ module native2axil_adapter #
    assign native_rdata = m_axi_rdata;
 
    always @(posedge clk) begin
-      if (!resetn) begin
+      if (rst) begin
 	 ack_awvalid <= 0;
       end else begin
 	 xfer_done <= native_valid && native_ready;

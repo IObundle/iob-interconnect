@@ -85,8 +85,6 @@ module axil2native_adapter #
    reg [DATA_WIDTH-1:0]     s_axil_rdata_reg = {DATA_WIDTH{1'b0}}, s_axil_rdata_next;
    reg 			    s_axil_rvalid_reg = 1'b0, s_axil_rvalid_next;
 
-   reg 			    xfer_done;
-
    reg 			    native_valid_reg;
    reg [ADDR_WIDTH-1:0]     native_addr_reg;
    reg [DATA_WIDTH-1:0]     native_wdata_reg;
@@ -188,16 +186,5 @@ module axil2native_adapter #
 	native_addr_reg <= s_axil_araddr;
       end
    end // always @ (posedge clk)
-
-   //TRANSFER DONE CHECK
-   always @ (posedge clk) begin
-      xfer_done = xfer_done;
-      if (rst)
-	xfer_done = 1'b1;
-      else if (rd_en || wr_en)
-	xfer_done = 1'b0;
-      else if (!xfer_done && native_ready)
-	xfer_done = 1'b1;
-   end
    
 endmodule

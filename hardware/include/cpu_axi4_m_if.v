@@ -33,7 +33,7 @@
    `OUTPUT(m_axi_arlock,  1),  //Address read channel lock type
    `OUTPUT(m_axi_arcache, 4),  //Address read channel memory type. Transactions set with Normal Non-cacheable Modifiable and Bufferable (0011).
    `OUTPUT(m_axi_arprot,  3),  //Address read channel protection type. Transactions set with Normal, Secure, and Data attributes (000).
-   `OUTPUT(m_axi_arqos,   3),  //Address read channel quality of service
+   `OUTPUT(m_axi_arqos,   4),  //Address read channel quality of service
    `OUTPUT(m_axi_arvalid, 1),  //Address read channel valid
    `INPUT(m_axi_arready,  1),  //Address read channel ready
 

@@ -69,11 +69,13 @@ module native2axil_adapter #
    assign m_axi_rready = native_valid && !native_wstrb;
    assign native_rdata = m_axi_rdata;
 
+   always @ *
+     xfer_done <= native_valid && native_ready;
+   
    always @(posedge clk) begin
       if (rst) begin
 	 ack_awvalid <= 0;
       end else begin
-	 xfer_done <= native_valid && native_ready;
 	 if (m_axi_awready && m_axi_awvalid)
 	   ack_awvalid <= 1;
 	 if (m_axi_arready && m_axi_arvalid)

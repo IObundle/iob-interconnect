@@ -29,17 +29,45 @@ module merge
    //                               
    //priority encoder: most significant bus has priority   
    //
-     reg [Nb-1:0]                      sel, sel_reg;
+   reg [Nb-1:0]                        sel, sel_reg;
+   
+   //select enable
+   reg                                 sel_en; 
+   always @(posedge clk, posedge rst)
+     if(rst)
+       sel_en <= 1'b1;
+     else if(s_req[`valid(0)])
+       sel_en <= 1'b0;
+     else if(s_resp[`ready(0)])
+       sel_en <= ~s_req[`valid(0)];
+     else
+       sel_en <= sel_en;
 
+   
    //select master
    integer                             k;
+   
+   reg                                 sel_en; 
+   always @(posedge clk, posedge rst)
+     if(rst)
+       sel_en <= 1'b1;
+     else if(s_req[`valid(0)])
+       sel_en <= 1'b0;
+     else if(s_resp[`ready(0)])
+       sel_en <= ~s_req[`valid(0)];
+     else
+       sel_en <= sel_en;
+   
+   
    always @* begin
       sel = {Nb{1'b0}};
       for (k=0; k<N_MASTERS; k=k+1)
-        if( m_req[`valid(k)] )
+        if (~sel_en)
+          sel = sel_reg;
+        else if( m_req[`valid(k)] )
           sel = k[Nb-1:0];          
    end
-
+   
    //
    //route master request to slave
    //  
@@ -73,5 +101,5 @@ module merge
           m_resp[`resp(j)] = {`RESP_W{1'b0}};
    end
 
- 
+   
 endmodule

@@ -1,6 +1,6 @@
    //address write
    `OUTPUT(m_axi_awid,    1),  //Address write channel ID
-   `OUTPUT(m_axi_awaddr,  32), //Address write channel address
+   `OUTPUT(m_axi_awaddr,  AXI_ADDR_W), //Address write channel address
    `OUTPUT(m_axi_awlen,   8),  //Address write channel burst length
    `OUTPUT(m_axi_awsize,  3),  //Address write channel burst size. This signal indicates the size of each transfer in the burst
    `OUTPUT(m_axi_awburst, 2),  //Address write channel burst type
@@ -12,8 +12,8 @@
    `INPUT(m_axi_awready,  1),  //Address write channel ready
 
    //write
-   `OUTPUT(m_axi_wdata,   32), //Write channel data
-   `OUTPUT(m_axi_wstrb,   4),  //Write channel write strobe
+   `OUTPUT(m_axi_wdata,   AXI_DATA_W), //Write channel data
+   `OUTPUT(m_axi_wstrb,   AXI_DATA_W/8),  //Write channel write strobe
    `OUTPUT(m_axi_wlast,   1),  //Write channel last word flag
    `OUTPUT(m_axi_wvalid,  1),  //Write channel valid
    `INPUT(m_axi_wready,   1),  //Write channel ready
@@ -26,7 +26,7 @@
   
    //address read
    `OUTPUT(m_axi_arid,    1),  //Address read channel id
-   `OUTPUT(m_axi_araddr,  32), //Address read channel address
+   `OUTPUT(m_axi_araddr,  AXI_ADDR_W), //Address read channel address
    `OUTPUT(m_axi_arlen,   8),  //Address read channel burst length
    `OUTPUT(m_axi_arsize,  3),  //Address read channel burst size. This signal indicates the size of each transfer in the burst
    `OUTPUT(m_axi_arburst, 2),  //Address read channel burst type
@@ -39,7 +39,7 @@
 
    //read
    `INPUT(m_axi_rid,      1),  //Read channel ID
-   `INPUT(m_axi_rdata,    32), //Read channel data
+   `INPUT(m_axi_rdata,    AXI_DATA_W), //Read channel data
    `INPUT(m_axi_rresp,    2),  //Read channel response
    `INPUT(m_axi_rlast,    1),  //Read channel last word
    `INPUT(m_axi_rvalid,   1),  //Read channel valid

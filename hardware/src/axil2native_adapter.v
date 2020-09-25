@@ -77,6 +77,7 @@ module axil2native_adapter #
     );
    
    reg 			    wr_en, rd_en;
+   reg 			    wr_en_reg, rd_en_reg; 			    
    
    reg 			    s_axil_wready_reg;
    reg 			    s_axil_bvalid_reg;
@@ -110,7 +111,7 @@ module axil2native_adapter #
    
    //WRITE
    always @* begin
-      wr_en = wr_en && !native_ready;
+      wr_en = wr_en_reg && !native_ready;
       
       s_axil_wready_next = 1'b0;
       s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_bready;
@@ -134,15 +135,17 @@ module axil2native_adapter #
       if (rst) begin
          s_axil_wready_reg <= 1'b0;
          s_axil_bvalid_reg <= 1'b0;
+	 wr_en_reg <= 1'b0;
       end else begin
          s_axil_wready_reg <= s_axil_wready_next;
          s_axil_bvalid_reg <= s_axil_bvalid_next;
+	 wr_en_reg <= wr_en;
       end
    end
 
    //READ
    always @* begin
-      rd_en = rd_en && !native_ready && !s_axil_wvalid && !s_axil_awvalid;
+      rd_en = rd_en_reg && !native_ready && !s_axil_wvalid && !s_axil_awvalid;
       s_axil_arready_next = 1'b0;
       s_axil_rvalid_next = s_axil_rvalid_reg && !s_axil_rready && !native_ready;
 
@@ -163,9 +166,11 @@ module axil2native_adapter #
     if (rst) begin
        s_axil_arready_reg <= 1'b0;
        s_axil_rvalid_reg <= 1'b0;
+       rd_en_reg <= 1'b0;
     end else begin
        s_axil_arready_reg <= s_axil_arready_next;
        s_axil_rvalid_reg <= s_axil_rvalid_next;
+       rd_en_reg <= rd_en;
     end
    end // always @ (posedge clk)
 
@@ -178,7 +183,7 @@ module axil2native_adapter #
 	 native_valid_reg <= s_axil_wvalid;
       end
       else begin
-	native_valid_reg <= s_axil_rvalid_next;
+	native_valid_reg <= s_axil_rvalid_reg | s_axil_arvalid;
 	native_addr_reg <= s_axil_araddr;
       end
    end // always @ (posedge clk)

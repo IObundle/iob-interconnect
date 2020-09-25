@@ -94,10 +94,6 @@ module axil2native_adapter #
    reg [DATA_WIDTH-1:0]     s_axil_rdata_next;
    reg 			    s_axil_rvalid_next;
 
-   
-   wire [ADDR_WIDTH-1:0] s_axil_awaddr_valid = s_axil_awaddr;
-   wire [ADDR_WIDTH-1:0] s_axil_araddr_valid = s_axil_araddr;
-   
    assign s_axil_awready = s_axil_wready_reg;
    assign s_axil_wready = s_axil_wready_reg;
    assign s_axil_bresp = 2'b00;

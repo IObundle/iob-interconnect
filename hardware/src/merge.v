@@ -45,20 +45,7 @@ module merge
 
    
    //select master
-   integer                             k;
-   
-   reg                                 sel_en; 
-   always @(posedge clk, posedge rst)
-     if(rst)
-       sel_en <= 1'b1;
-     else if(s_req[`valid(0)])
-       sel_en <= 1'b0;
-     else if(s_resp[`ready(0)])
-       sel_en <= ~s_req[`valid(0)];
-     else
-       sel_en <= sel_en;
-   
-   
+   integer                             k; 
    always @* begin
       sel = {Nb{1'b0}};
       for (k=0; k<N_MASTERS; k=k+1)

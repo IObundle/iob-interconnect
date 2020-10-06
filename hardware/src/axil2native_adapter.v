@@ -44,7 +44,6 @@ module axil2native_adapter #
     
     // AXI4-lite slave interface
     input [ADDR_WIDTH-1:0]  s_axil_awaddr,
-    input [2:0] 	    s_axil_awprot,
     input 		    s_axil_awvalid,
     output 		    s_axil_awready,
     
@@ -58,7 +57,6 @@ module axil2native_adapter #
     input 		    s_axil_bready,
     
     input [ADDR_WIDTH-1:0]  s_axil_araddr,
-    input [2:0] 	    s_axil_arprot,
     input 		    s_axil_arvalid,
     output 		    s_axil_arready,
     

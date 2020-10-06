@@ -83,11 +83,8 @@ module axil2native_adapter #
 
    reg 			    native_valid_reg;
    reg [ADDR_WIDTH-1:0]     native_addr_reg;
-   reg [DATA_WIDTH-1:0]     native_wdata_reg;
-   reg [STRB_WIDTH-1:0]     native_wstrb_reg;
 
    reg 			    s_axil_wready_next;
-   reg 			    s_axil_bvalid_next;
    reg 			    s_axil_arready_next;
    reg [DATA_WIDTH-1:0]     s_axil_rdata_next;
    reg 			    s_axil_rvalid_next;
@@ -103,8 +100,8 @@ module axil2native_adapter #
 
    assign native_valid = native_valid_reg;
    assign native_addr = native_addr_reg;
-   assign native_wdata = native_wdata_reg;
-   assign native_wstrb = native_wstrb_reg;
+   assign native_wdata = s_axil_wdata;
+   assign native_wstrb = s_axil_wstrb;
    
    //WRITE
    always @* begin
@@ -114,17 +111,13 @@ module axil2native_adapter #
 
       if (rst) begin
 	 wr_en = 1'b0;
-	 s_axil_bvalid_next = 1'b0;
       end
       
       else if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!native_ready)) begin
          s_axil_wready_next = 1'b1;
-         s_axil_bvalid_next = 1'b1;
 	 
 	 wr_en = 1'b1;
       end
-      native_wstrb_reg <= s_axil_wstrb;
-      native_wdata_reg <= s_axil_wdata;
    end
    
    always @(posedge clk) begin

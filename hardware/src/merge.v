@@ -40,8 +40,6 @@ module merge
        sel_en <= 1'b0;
      else if(s_resp[`ready(0)])
        sel_en <= ~s_req[`valid(0)];
-     else
-       sel_en <= sel_en;
 
    
    //select master

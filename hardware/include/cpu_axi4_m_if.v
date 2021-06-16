@@ -30,7 +30,7 @@
    `OUTPUT(m_axi_arlen,  `AXI_LEN_W),     //Address read channel burst length
    `OUTPUT(m_axi_arsize, `AXI_SIZE_W),    //Address read channel burst size. This signal indicates the size of each transfer in the burst
    `OUTPUT(m_axi_arburst,`AXI_BURST_W),   //Address read channel burst type
-   `OUTPUT(m_axi_arlock, `AXI_PROT_W),    //Address read channel lock type
+   `OUTPUT(m_axi_arlock, `AXI_LOCK_W),    //Address read channel lock type
    `OUTPUT(m_axi_arcache,`AXI_CACHE_W),   //Address read channel memory type. Transactions set with Normal Non-cacheable Modifiable and Bufferable (0011).
    `OUTPUT(m_axi_arprot, `AXI_PROT_W),    //Address read channel protection type. Transactions set with Normal, Secure, and Data attributes (000).
    `OUTPUT(m_axi_arqos,  `AXI_QOS_W),     //Address read channel quality of service

@@ -32,10 +32,6 @@
 // Response width (response = 0 - Okay = 0; Exokay = 1; Slverr = 2; decerr = 3)
 `define AXI_RESP_W 2
 
-//
-// Signals declaration
-//
-
 // Port
 
 `define AXI4_M_IF_PORT(PREFIX) \

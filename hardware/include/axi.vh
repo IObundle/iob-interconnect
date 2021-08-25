@@ -122,6 +122,52 @@
     output                    PREFIX``axi_rvalid,  /*Read channel valid*/ \
     input                     PREFIX``axi_rready   /*Read channel ready*/
 
+// Portmap
+
+`define AXI4_IF_PORTMAP(PORT_PREFIX, WIRE_PREFIX) \
+    /*address write*/ \
+    .``PORT_PREFIX``axi_awid    (WIRE_PREFIX``axi_awid),    /*Address write channel ID*/ \
+    .``PORT_PREFIX``axi_awaddr  (WIRE_PREFIX``axi_awaddr),  /*Address write channel address*/ \
+    .``PORT_PREFIX``axi_awlen   (WIRE_PREFIX``axi_awlen),   /*Address write channel burst length*/ \
+    .``PORT_PREFIX``axi_awsize  (WIRE_PREFIX``axi_awsize),  /*Address write channel burst size. This signal indicates the size of each transfer in the burst*/ \
+    .``PORT_PREFIX``axi_awburst (WIRE_PREFIX``axi_awburst), /*Address write channel burst type*/ \
+    .``PORT_PREFIX``axi_awlock  (WIRE_PREFIX``axi_awlock),  /*Address write channel lock type*/ \
+    .``PORT_PREFIX``axi_awcache (WIRE_PREFIX``axi_awcache), /*Address write channel memory type. Transactions set with Normal Non-cacheable Modifiable and Bufferable (0011).*/ \
+    .``PORT_PREFIX``axi_awprot  (WIRE_PREFIX``axi_awprot),  /*Address write channel protection type. Transactions set with Normal, Secure, and Data attributes (000).*/ \
+    .``PORT_PREFIX``axi_awqos   (WIRE_PREFIX``axi_awqos),   /*Address write channel quality of service*/ \
+    .``PORT_PREFIX``axi_awvalid (WIRE_PREFIX``axi_awvalid), /*Address write channel valid*/ \
+    .``PORT_PREFIX``axi_awready (WIRE_PREFIX``axi_awready), /*Address write channel ready*/ \
+    /*write*/ \
+    .``PORT_PREFIX``axi_wdata   (WIRE_PREFIX``axi_wdata),   /*Write channel data*/ \
+    .``PORT_PREFIX``axi_wstrb   (WIRE_PREFIX``axi_wstrb),   /*Write channel write strobe*/ \
+    .``PORT_PREFIX``axi_wlast   (WIRE_PREFIX``axi_wlast),   /*Write channel last word flag*/ \
+    .``PORT_PREFIX``axi_wvalid  (WIRE_PREFIX``axi_wvalid),  /*Write channel valid*/ \
+    .``PORT_PREFIX``axi_wready  (WIRE_PREFIX``axi_wready),  /*Write channel ready*/ \
+    /*write response*/ \
+    .``PORT_PREFIX``axi_bid     (WIRE_PREFIX``axi_bid),     /*Write response channel ID*/ \
+    .``PORT_PREFIX``axi_bresp   (WIRE_PREFIX``axi_bresp),   /*Write response channel response*/ \
+    .``PORT_PREFIX``axi_bvalid  (WIRE_PREFIX``axi_bvalid),  /*Write response channel valid*/ \
+    .``PORT_PREFIX``axi_bready  (WIRE_PREFIX``axi_bready),  /*Write response channel ready*/ \
+    /*address read*/ \
+    .``PORT_PREFIX``axi_arid    (WIRE_PREFIX``axi_arid),    /*Address read channel id*/ \
+    .``PORT_PREFIX``axi_araddr  (WIRE_PREFIX``axi_araddr),  /*Address read channel address*/ \
+    .``PORT_PREFIX``axi_arlen   (WIRE_PREFIX``axi_arlen),   /*Address read channel burst length*/ \
+    .``PORT_PREFIX``axi_arsize  (WIRE_PREFIX``axi_arsize),  /*Address read channel burst size. This signal indicates the size of each transfer in the burst*/ \
+    .``PORT_PREFIX``axi_arburst (WIRE_PREFIX``axi_arburst), /*Address read channel burst type*/ \
+    .``PORT_PREFIX``axi_arlock  (WIRE_PREFIX``axi_arlock),  /*Address read channel lock type*/ \
+    .``PORT_PREFIX``axi_arcache (WIRE_PREFIX``axi_arcache), /*Address read channel memory type. Transactions set with Normal Non-cacheable Modifiable and Bufferable (0011).*/ \
+    .``PORT_PREFIX``axi_arprot  (WIRE_PREFIX``axi_arprot),  /*Address read channel protection type. Transactions set with Normal, Secure, and Data attributes (000).*/ \
+    .``PORT_PREFIX``axi_arqos   (WIRE_PREFIX``axi_arqos),   /*Address read channel quality of service*/ \
+    .``PORT_PREFIX``axi_arvalid (WIRE_PREFIX``axi_arvalid), /*Address read channel valid*/ \
+    .``PORT_PREFIX``axi_arready (WIRE_PREFIX``axi_arready), /*Address read channel ready*/ \
+    /*read*/ \
+    .``PORT_PREFIX``axi_rid     (WIRE_PREFIX``axi_rid),     /*Read channel ID*/ \
+    .``PORT_PREFIX``axi_rdata   (WIRE_PREFIX``axi_rdata),   /*Read channel data*/ \
+    .``PORT_PREFIX``axi_rresp   (WIRE_PREFIX``axi_rresp),   /*Read channel response*/ \
+    .``PORT_PREFIX``axi_rlast   (WIRE_PREFIX``axi_rlast),   /*Read channel last word*/ \
+    .``PORT_PREFIX``axi_rvalid  (WIRE_PREFIX``axi_rvalid),  /*Read channel valid*/ \
+    .``PORT_PREFIX``axi_rready  (WIRE_PREFIX``axi_rready)   /*Read channel ready*/
+
 // Wire
 
 `define AXI4_IF_WIRE(PREFIX) \

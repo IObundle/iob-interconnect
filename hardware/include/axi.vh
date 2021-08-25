@@ -124,7 +124,7 @@
     output [`AXI_RESP_W-1:0]  PREFIX``s_axi_rresp,   /*Read channel response*/ \
     output                    PREFIX``s_axi_rlast,   /*Read channel last word*/ \
     output                    PREFIX``s_axi_rvalid,  /*Read channel valid*/ \
-    input                     PREFIX``s_axi_rready,  /*Read channel ready*/
+    input                     PREFIX``s_axi_rready   /*Read channel ready*/
 
 `define AXI4_M_IF_PORT_CORE(CORE) \
     `AXI4_M_IF_PORT_PREFIX(CORE``_)

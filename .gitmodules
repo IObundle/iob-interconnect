@@ -1,3 +1,0 @@
-[submodule "axi-mem"]
-	path = submodules/axi-mem
-	url = git@github.com:jjts/verilog-axi.git

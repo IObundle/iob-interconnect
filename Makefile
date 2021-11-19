@@ -1,4 +1,8 @@
-SIM_DIR:=hardware/simulation/icarus
+INTERCON_DIR:=.
+include config.mk
+
+corename:
+	@echo $(MODULE)
 
 sim:
 	make -C $(SIM_DIR)
@@ -6,4 +10,4 @@ sim:
 clean:
 	make -C $(SIM_DIR) clean
 
-.PHONY: sim clean
+.PHONY: corename sim clean

@@ -1,7 +1,7 @@
 include $(INTERCON_DIR)/config.mk
 
 #add itself to MODULES list
-MODULES+=INTERCON
+MODULES+=$(MODULE)
 
 #paths
 INTERCON_HW_DIR:=$(INTERCON_DIR)/hardware

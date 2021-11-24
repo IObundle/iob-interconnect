@@ -2,7 +2,7 @@ INTERCON_DIR:=.
 include config.mk
 
 corename:
-	@echo $(MODULE)
+	@echo "INTERCON"
 
 sim:
 	make -C $(SIM_DIR)

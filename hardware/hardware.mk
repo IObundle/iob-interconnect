@@ -1,7 +1,7 @@
 include $(INTERCON_DIR)/config.mk
 
 #add itself to MODULES list
-MODULES+=INTERCON
+MODULES+=$(shell make -C $(INTERCON_DIR) corename | grep -v make)
 
 #include
 INCLUDE+=$(incdir)$(INTERCON_INC_DIR)

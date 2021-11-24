@@ -7,7 +7,7 @@ corename:
 sim:
 	make -C $(SIM_DIR)
 
-clean:
+sim-clean:
 	make -C $(SIM_DIR) clean
 
-.PHONY: corename sim clean
+.PHONY: corename sim sim-clean

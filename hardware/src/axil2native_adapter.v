@@ -1,172 +1,130 @@
-/*
-
-Copyright (c) 2018 Alex Forencich
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
-
-// Language: Verilog 2001
-
 `timescale 1ns / 1ps
 
-/*
- * AXI4-Lite RAM
- */
+`include "axi.vh"
+
 module axil2native_adapter #
   (
-   // Width of data bus in bits
-   parameter DATA_WIDTH = 32,
-   // Width of address bus in bits
-   parameter ADDR_WIDTH = 32,
-   // Width of wstrb (width of data bus in words)
-   parameter STRB_WIDTH = (DATA_WIDTH/8)
+   parameter AXIL_ADDR_W = 32, // Width of address bus in bits
+   parameter AXIL_DATA_W = 32  // Width of data bus in bits
    )
    (
-    input 		    clk,
-    input 		    rst,
-    
-    // AXI4-lite slave interface
-    input [ADDR_WIDTH-1:0]  s_axil_awaddr,
-    input 		    s_axil_awvalid,
-    output 		    s_axil_awready,
-    
-    input [DATA_WIDTH-1:0]  s_axil_wdata,
-    input [STRB_WIDTH-1:0]  s_axil_wstrb,
-    input 		    s_axil_wvalid,
-    output 		    s_axil_wready,
-    
-    output [1:0] 	    s_axil_bresp,
-    output 		    s_axil_bvalid,
-    input 		    s_axil_bready,
-    
-    input [ADDR_WIDTH-1:0]  s_axil_araddr,
-    input 		    s_axil_arvalid,
-    output 		    s_axil_arready,
-    
-    output [DATA_WIDTH-1:0] s_axil_rdata,
-    output [1:0] 	    s_axil_rresp,
-    output 		    s_axil_rvalid,
-    input 		    s_axil_rready,
-    
+    input                      clk,
+    input                      rst,
+
+    //
+    // AXI-4 lite slave interface
+    //
+    `AXI4_LITE_S_IF_PORT(s_),
+
+    //
     // Native interface
-    output 		    native_valid,
-    input 		    native_ready,
-    output [ADDR_WIDTH-1:0] native_addr,
-    output [DATA_WIDTH-1:0] native_wdata,
-    output [STRB_WIDTH-1:0] native_wstrb,
-    input [DATA_WIDTH-1:0]  native_rdata 
+    //
+    output reg                 valid,
+    output [AXIL_ADDR_W-3:0]   addr,
+    output [AXIL_DATA_W-1:0]   wdata,
+    output [AXIL_DATA_W/8-1:0] wstrb,
+    input [AXIL_DATA_W-1:0]    rdata,
+    input                      ready
     );
-   
-   reg 			    wr_en;
-   reg 			    wr_en_reg;
-   
-   reg 			    s_axil_wready_reg;
-   reg 			    s_axil_arready_reg;
-   reg 			    s_axil_rvalid_reg;
 
-   reg 			    native_valid_reg;
-   reg [ADDR_WIDTH-1:0]     native_addr_reg;
+   reg                         s_axil_awready_int;
+   reg                         s_axil_arready_int;
+   reg                         s_axil_bvalid_int;
+   reg                         s_axil_rvalid_int;
+   reg                         s_axil_wready_int;
 
-   reg 			    s_axil_wready_next;
-   reg 			    s_axil_arready_next;
-   reg [DATA_WIDTH-1:0]     s_axil_rdata_next;
-   reg 			    s_axil_rvalid_next;
+   assign s_axil_awready = s_axil_awready_int;
+   assign s_axil_arready = s_axil_arready_int;
+   assign s_axil_bvalid = s_axil_bvalid_int;
+   assign s_axil_rvalid = s_axil_rvalid_int;
+   assign s_axil_wready = s_axil_wready_int;
+   assign s_axil_rdata = rdata;
 
-   assign s_axil_awready = s_axil_wready_reg;
-   assign s_axil_wready = s_axil_wready_reg;
-   assign s_axil_bresp = 2'b00;
-   assign s_axil_bvalid = native_ready;
-   assign s_axil_arready = s_axil_arready_reg;
-   assign s_axil_rdata = native_rdata;
-   assign s_axil_rresp = 2'b00;
-   assign s_axil_rvalid = native_ready;
+   // AXI IDs
+   assign s_axil_bid = `AXI_ID_W'd0;
+   assign s_axil_rid = `AXI_ID_W'd0;
 
-   assign native_valid = native_valid_reg;
-   assign native_addr = native_addr_reg;
-   assign native_wdata = s_axil_wdata;
-   assign native_wstrb = s_axil_wstrb;
-   
-   //WRITE
-   always @* begin
-      wr_en = wr_en_reg && !native_ready;
-      
-      s_axil_wready_next = 1'b0;
+   // Response is always OK
+   assign s_axil_bresp = `AXI_RESP_W'd0;
+   assign s_axil_rresp = `AXI_RESP_W'd0;
 
-      if (rst) begin
-	 wr_en = 1'b0;
-      end
-      
-      else if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!native_ready)) begin
-         s_axil_wready_next = 1'b1;
-	 
-	 wr_en = 1'b1;
-      end
-   end
-   
+   // Discart 2 less significant bits
+   assign addr  = s_axil_wvalid? s_axil_awaddr[AXIL_ADDR_W-1:2]: s_axil_araddr[AXIL_ADDR_W-1:2];
+   assign wstrb = s_axil_wvalid? s_axil_wstrb: {(AXIL_DATA_W/8){1'b0}};
+   assign wdata = s_axil_wdata;
+
+   localparam IDLE=2'h0, WRITE=2'h1, READ=2'h2, W_RESPONSE=2'h3;
+
+   reg [1:0]                   state;
+   reg [1:0]                   state_nxt;
+
+   // State register
    always @(posedge clk) begin
       if (rst) begin
-         s_axil_wready_reg <= 1'b0;
-	 wr_en_reg <= 1'b0;
+         state <= 2'b00;
       end else begin
-         s_axil_wready_reg <= s_axil_wready_next;
-	 wr_en_reg <= wr_en;
+         state <= state_nxt;
       end
    end
 
-   //READ
-   always @* begin
-      s_axil_arready_next = 1'b0;
-      s_axil_rvalid_next = s_axil_rvalid_reg && !s_axil_rready && !native_ready;
-
-      if (rst) begin
-	 s_axil_rvalid_next = 1'b0;
-      end
-      
-      else if (s_axil_arvalid && (!s_axil_rvalid || s_axil_rready) && !native_ready && !s_axil_wvalid && !s_axil_awvalid) begin
-         s_axil_arready_next = 1'b1;
-         s_axil_rvalid_next = 1'b1;
-      end
-   end
-   
+   wire                        rst_ready_int = (state_nxt == IDLE)? 1'b1: 1'b0;
+   reg                         ready_int;
    always @(posedge clk) begin
-    if (rst) begin
-       s_axil_arready_reg <= 1'b0;
-       s_axil_rvalid_reg <= 1'b0;
-    end else begin
-       s_axil_arready_reg <= s_axil_arready_next;
-       s_axil_rvalid_reg <= s_axil_rvalid_next;
-    end
-   end // always @ (posedge clk)
+      if (rst_ready_int) begin
+         ready_int <= 1'b0;
+      end if (ready) begin
+         ready_int <= 1'b1;
+      end
+   end
 
-   //ADDRESS/VALID MUX
-   always @ * begin
-      native_addr_reg <= {ADDR_WIDTH{1'b0}};
-      native_valid_reg <= 1'b0;
-      if (wr_en) begin
-	 native_addr_reg <= s_axil_awaddr;
-	 native_valid_reg <= s_axil_wvalid;
-      end
-      else begin
-	native_valid_reg <= s_axil_rvalid_reg | s_axil_arvalid;
-	native_addr_reg <= s_axil_araddr;
-      end
-   end // always @ (posedge clk)
-   
+   // State machine
+   always @* begin
+      state_nxt = state;
+
+      valid = 1'b0;
+
+      s_axil_awready_int = 1'b0;
+      s_axil_arready_int = 1'b0;
+      s_axil_bvalid_int = 1'b0;
+      s_axil_rvalid_int = 1'b0;
+      s_axil_wready_int = 1'b0;
+
+      case (state)
+        IDLE: begin
+           if (s_axil_awvalid) begin
+              state_nxt = WRITE;
+           end else if (s_axil_arvalid) begin
+              state_nxt = READ;
+           end
+        end
+        WRITE: begin
+           if (ready) begin
+              state_nxt = W_RESPONSE;
+           end
+
+           valid = s_axil_wvalid;
+
+           s_axil_awready_int = ready;
+           s_axil_wready_int  = ready;
+        end
+        READ: begin
+           if (s_axil_rready) begin
+              state_nxt = IDLE;
+           end
+
+           valid = 1'b1;
+
+           s_axil_arready_int = ready & s_axil_arvalid;
+           s_axil_rvalid_int  = ready | ready_int;
+        end
+        W_RESPONSE: begin
+           if (s_axil_bready) begin
+              state_nxt = IDLE;
+           end
+
+           s_axil_bvalid_int = 1'b1;
+        end
+      endcase
+   end
+
 endmodule

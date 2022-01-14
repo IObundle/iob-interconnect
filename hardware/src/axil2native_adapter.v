@@ -20,7 +20,7 @@ module axil2native_adapter #
     // Native interface
     //
     output reg                 valid,
-    output [AXIL_ADDR_W-3:0]   addr,
+    output [AXIL_ADDR_W-1:0]   addr,
     output [AXIL_DATA_W-1:0]   wdata,
     output [AXIL_DATA_W/8-1:0] wstrb,
     input [AXIL_DATA_W-1:0]    rdata,
@@ -49,7 +49,7 @@ module axil2native_adapter #
    assign s_axil_rresp = `AXI_RESP_W'd0;
 
    // Discart 2 less significant bits
-   assign addr  = s_axil_wvalid? s_axil_awaddr[AXIL_ADDR_W-1:2]: s_axil_araddr[AXIL_ADDR_W-1:2];
+   assign addr  = s_axil_wvalid? s_axil_awaddr: s_axil_araddr;
    assign wstrb = s_axil_wvalid? s_axil_wstrb: {(AXIL_DATA_W/8){1'b0}};
    assign wdata = s_axil_wdata;
 

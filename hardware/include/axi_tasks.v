@@ -10,7 +10,7 @@ task write_data_axil;
 
    begin
       // Write address
-      s_axil_awaddr  = (axilAddress*4);
+      s_axil_awaddr  = axilAddress;
       s_axil_awvalid = 1'b1;
 
       // Write data
@@ -61,7 +61,7 @@ task read_data_axil;
 
    begin
       // Write address
-      s_axil_araddr  = (axilAddress*4);
+      s_axil_araddr  = axilAddress;
       s_axil_arvalid = 1'b1;
 
       while (!s_axil_arready) begin

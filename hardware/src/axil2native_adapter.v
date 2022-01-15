@@ -17,7 +17,7 @@ module axil2native_adapter #
     `AXI4_LITE_S_IF_PORT(s_),
 
     //
-    // Native interface
+    // Native master interface
     //
     output reg                 valid,
     output [AXIL_ADDR_W-1:0]   addr,
@@ -48,7 +48,6 @@ module axil2native_adapter #
    assign s_axil_bresp = `AXI_RESP_W'd0;
    assign s_axil_rresp = `AXI_RESP_W'd0;
 
-   // Discart 2 less significant bits
    assign addr  = s_axil_wvalid? s_axil_awaddr: s_axil_araddr;
    assign wstrb = s_axil_wvalid? s_axil_wstrb: {(AXIL_DATA_W/8){1'b0}};
    assign wdata = s_axil_wdata;
@@ -72,7 +71,7 @@ module axil2native_adapter #
    always @(posedge clk) begin
       if (rst_ready_int) begin
          ready_int <= 1'b0;
-      end if (ready) begin
+      end else if (ready) begin
          ready_int <= 1'b1;
       end
    end
@@ -102,17 +101,17 @@ module axil2native_adapter #
               state_nxt = W_RESPONSE;
            end
 
-           valid = s_axil_wvalid;
+           valid = ~ready;
 
            s_axil_awready_int = ready;
            s_axil_wready_int  = ready;
         end
         READ: begin
-           if (s_axil_rready) begin
+           if ((ready| ready_int) & s_axil_rready) begin
               state_nxt = IDLE;
            end
 
-           valid = 1'b1;
+           valid = ~(ready | ready_int);
 
            s_axil_arready_int = ready & s_axil_arvalid;
            s_axil_rvalid_int  = ready | ready_int;

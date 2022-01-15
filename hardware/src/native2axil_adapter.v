@@ -1,92 +1,144 @@
 `timescale 1ns / 1ps
 
+`include "axi.vh"
+
 module native2axil_adapter #
   (
-   // Width of data bus in bits
-   parameter DATA_WIDTH = 32,
-   // Width of address bus in bits
-   parameter ADDR_WIDTH = 32,
-   // Width of wstrb (width of data bus in words)
-   parameter STRB_WIDTH = (DATA_WIDTH/8)
-   )   
+   parameter AXIL_ADDR_W = 32, // Width of address bus in bits
+   parameter AXIL_DATA_W = 32  // Width of data bus in bits
+   )
    (
-    input 		    clk, rst,
-    
-    // AXI4-lite master interface
-    
-    output 		    m_axi_awvalid,
-    input 		    m_axi_awready,
-    output [ADDR_WIDTH-1:0] m_axi_awaddr,
-    output [ 2:0] 	    m_axi_awprot,
+    input                     clk,
+    input                     rst,
 
-    output 		    m_axi_wvalid,
-    input 		    m_axi_wready,
-    output [DATA_WIDTH-1:0] m_axi_wdata,
-    output [STRB_WIDTH-1:0] m_axi_wstrb,
+    //
+    // AXI-4 lite master interface
+    //
+    `AXI4_LITE_M_IF_PORT(m_),
 
-    input 		    m_axi_bvalid,
-    output 		    m_axi_bready,
-
-    output 		    m_axi_arvalid,
-    input 		    m_axi_arready,
-    output [ADDR_WIDTH-1:0] m_axi_araddr,
-    output [ 2:0] 	    m_axi_arprot,
-
-    input 		    m_axi_rvalid,
-    output 		    m_axi_rready,
-    input [DATA_WIDTH-1:0]  m_axi_rdata,
-
-    // Native interface
-    
-    input 		    native_valid,
-    input 		    native_instr,
-    output 		    native_ready,
-    input [ADDR_WIDTH-1:0]  native_addr,
-    input [DATA_WIDTH-1:0]  native_wdata,
-    input [STRB_WIDTH-1:0]  native_wstrb,
-    output [DATA_WIDTH-1:0] native_rdata
+    //
+    // Native slave interface
+    //
+    input                     valid,
+    input [AXIL_ADDR_W-1:0]   addr,
+    input [AXIL_DATA_W-1:0]   wdata,
+    input [AXIL_DATA_W/8-1:0] wstrb,
+    output [AXIL_DATA_W-1:0]  rdata,
+    output reg                ready
     );
-   
-   reg 		  ack_awvalid;
-   reg 		  ack_arvalid;
-   reg 		  ack_wvalid;
-   reg 		  xfer_done;
-   
-   assign m_axi_awvalid = native_valid && |native_wstrb && !ack_awvalid;
-   assign m_axi_awaddr = native_addr;
-   assign m_axi_awprot = 0;
 
-   assign m_axi_arvalid = native_valid && !native_wstrb && !ack_arvalid;
-   assign m_axi_araddr = native_addr;
-   assign m_axi_arprot = native_instr ? 3'b100 : 3'b000;
+   reg                        m_axil_awvalid_int;
+   reg                        m_axil_arvalid_int;
+   reg                        m_axil_bready_int;
+   reg                        m_axil_rready_int;
+   reg                        m_axil_wvalid_int;
 
-   assign m_axi_wvalid = native_valid && |native_wstrb && !ack_wvalid;
-   assign m_axi_wdata = native_wdata;
-   assign m_axi_wstrb = native_wstrb;
+   assign m_axil_awvalid = m_axil_awvalid_int;
+   assign m_axil_arvalid = m_axil_arvalid_int;
+   assign m_axil_bready  = m_axil_bready_int;
+   assign m_axil_rready  = m_axil_rready_int;
+   assign m_axil_wvalid  = m_axil_wvalid_int;
+   assign m_axil_awaddr  = addr;
+   assign m_axil_araddr  = addr;
+   assign m_axil_wdata   = wdata;
+   assign m_axil_wstrb   = wstrb;
 
-   assign native_ready = m_axi_bvalid || m_axi_rvalid;
-   assign m_axi_bready = native_valid && |native_wstrb;
-   assign m_axi_rready = native_valid && !native_wstrb;
-   assign native_rdata = m_axi_rdata;
+   // AXI IDs
+   assign m_axil_awid = `AXI_ID_W'd0;
+   assign m_axil_wid  = `AXI_ID_W'd0;
+   assign m_axil_arid = `AXI_ID_W'd0;
 
-   always @ *
-     xfer_done <= native_valid && native_ready;
-   
+   // Protection types
+   assign m_axil_awprot = `AXI_PROT_W'd2;
+   assign m_axil_arprot = `AXI_PROT_W'd2;
+
+   // Quality of services
+   assign m_axil_awqos = `AXI_QOS_W'd0;
+   assign m_axil_arqos = `AXI_QOS_W'd0;
+
+   assign rdata = m_axil_rdata;
+
+   localparam IDLE=2'h0, WRITE=2'h1, READ=2'h2, W_RESPONSE=2'h3;
+
+   reg [1:0]                  state;
+   reg [1:0]                  state_nxt;
+
+   // State register
    always @(posedge clk) begin
       if (rst) begin
-	 ack_awvalid <= 0;
+         state <= 2'b00;
       end else begin
-	 if (m_axi_awready && m_axi_awvalid)
-	   ack_awvalid <= 1;
-	 if (m_axi_arready && m_axi_arvalid)
-	   ack_arvalid <= 1;
-	 if (m_axi_wready && m_axi_wvalid)
-	   ack_wvalid <= 1;
-	 if (xfer_done || !native_valid) begin
-	    ack_awvalid <= 0;
-	    ack_arvalid <= 0;
-	    ack_wvalid <= 0;
-	 end
+         state <= state_nxt;
       end
    end
+
+   wire                       rst_valid_int = (state_nxt == IDLE)? 1'b1: 1'b0;
+   reg                        awvalid_int;
+   reg                        arvalid_int;
+   always @(posedge clk) begin
+      if (rst_valid_int) begin
+         awvalid_int <= 1'b1;
+         arvalid_int <= 1'b1;
+      end else begin
+         if (m_axil_awready) begin
+            awvalid_int <= 1'b0;
+         end
+         if (m_axil_arready) begin
+            arvalid_int <= 1'b0;
+         end
+      end
+   end
+
+   // State machine
+   always @* begin
+      state_nxt = state;
+
+      ready = 1'b0;
+
+      m_axil_awvalid_int = 1'b0;
+      m_axil_arvalid_int = 1'b0;
+      m_axil_bready_int = 1'b0;
+      m_axil_rready_int = 1'b0;
+      m_axil_wvalid_int = 1'b0;
+
+      case (state)
+        IDLE: begin
+           if (valid) begin
+              if (|wstrb) begin
+                 state_nxt = WRITE;
+              end else begin
+                 state_nxt = READ;
+              end
+           end
+        end
+        WRITE: begin
+           if (m_axil_wready) begin
+              state_nxt = W_RESPONSE;
+           end
+
+           ready = m_axil_wready;
+
+           m_axil_awvalid_int = awvalid_int;
+           m_axil_wvalid_int  = 1'b1;
+        end
+        READ: begin
+           if (m_axil_rvalid) begin
+              state_nxt = IDLE;
+           end
+
+           ready = m_axil_rvalid;
+
+           m_axil_arvalid_int = arvalid_int;
+           m_axil_rready_int  = 1'b1;
+        end
+        W_RESPONSE: begin
+           if (m_axil_bvalid) begin
+              state_nxt = IDLE;
+           end
+
+           m_axil_bready_int = 1'b1;
+        end
+      endcase
+   end
+
 endmodule
